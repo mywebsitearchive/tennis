@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+    <head>
+        <title>Tennis game</title>
+	<meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/3/31/Tennis_ball_2.svg">
+        <style>
+            body{
+                background-color: rgb(81, 39, 24);
+            }
+            #court{
+                position: relative;
+                margin: auto;
+                background-color: rgb(255, 127, 80);
+                width: 500px;
+                height: 500px;
+                cursor: url(Crosshairs_Red.svg.png) 4 12, all-scroll;
+            }
+            #player{
+                position: absolute;
+                height: 16px;
+                width: 16px;
+                background-color: red;
+                border: 2px solid white;
+                top: 440px;
+                left: 240px
+
+            }
+            #opp{
+                position: absolute;
+                height: 16px;
+                width: 16px;
+                background-color: blue;
+                border: 2px solid white;
+                top: 40px;
+                left: 240px
+            }
+            #ball{
+                position: absolute;
+                height: 20px;
+                width: 20px;
+                background-color: greenyellow;
+                border-radius: 10px;
+                left: 240px;
+                display: none;
+            }
+            #test, #test2, #test3, #mode, #message, #failuremessage{
+                color: wheat;
+            }
+            #footsteps{
+                position: absolute;
+                height: 40px;
+                width: 40px;
+                background-color: rgb(0, 0, 0);
+                opacity: 0;
+            }
+            @keyframes footstepsanimation{
+                0%{scale: 1; opacity: 1;}
+                50%{scale: 0; opacity: 0;}
+                100%{scale: 1; opacity: 0;}
+            }
+            button{
+                font-size: large;
+            }
+            #message{
+                position: absolute;
+                font-size: larger;
+            }
+            #scoreboard{
+                position: absolute;
+                left: 100px;
+                font-size: x-large;
+                color: wheat;
+            }
+
+        </style>
+    </head>
+    <body onkeydown="handleKeyDown()" onkeyup="handleKeyUp()">
+        <div id="court" onclick="handleClick(event)">
+            <div id="opp"></div>
+            <div id="player"></div>
+            <div id="ball"></div>
+            <div id="footsteps"></div>
+            <div id="message"></div>
+            <div id="scoreboard">00:00</div>
+        </div>
+        <button onclick="chooseMode()">Change mode</button>
+        <div id="mode">Mouse mode</div>
+        <div id="test">t1</div>
+        <div id="test2">t2</div>
+        <div id="test3">t3</div>
+        <div id="failuremessage"></div>
+        <div id="testscore"></div>
+
+
+        <script>
+            let px = 240;
+            let py = 440;
+            let bx = 240;
+            const player = document.getElementById("player");
+            const ball = document.getElementById("ball");
+            const opp = document.getElementById("opp");
+            const test = document.getElementById("test");
+            const test2 = document.getElementById("test2");
+            const test3 = document.getElementById("test3");
+            const footsteps = document.getElementById("footsteps");
+            const message = document.getElementById("message");
+            const scoreboard = document.getElementById("scoreboard");
+            const failuremessage = document.getElementById("failuremessage");
+            const testscore = document.getElementById("testscore");
+            
+
+            let intP;
+            let intPMouse;
+            let intBall;
+            let intServeClock;
+            let intervalRunning = false;
+            let isKeyTaken = false;
+            let twoKeysTaken = false;
+            let usingMouse = true;
+            let beginning = true;
+            let playerHasHitTheBall = false;
+            let destinationX ;
+            let destinationY;
+            let playerDirectionX = 0;
+            let playerDirectionY = 0;
+            let ballDirectionX = 0;
+            let ballDirectionY = 0;
+            let prevX = 0;
+            let prevY = 0;
+            let deltaX = 0;
+            let deltaY = 0;
+            let speedFactor = 0;
+            let servingSide;
+            let ballSpeed = 5;
+            let ptsP = 0;
+            let ptsO = 0;
+            let ptsPA = "00";
+            let ptsOA = "00";
+
+            let startGame=()=>{
+                if(intP || intPMouse){
+                    clearInterval(intP);
+                    clearInterval(intPMouse);
+                }
+                beginning = true;
+                py = 440;                
+                let rnd = Math.random()
+                if(rnd<0.5){
+                    message.innerHTML = "Serve"
+                    by = 420;
+                    if(rnd<0.25){
+                        servingSide = "left"
+                        px = 200;
+                        bx = 200;
+                        ballDirectionX = ballSpeed*0.5;
+                        ballDirectionY = -ballSpeed;
+                    }
+                    else{
+                        servingSide = "right";
+                        px = 300;
+                        bx = 300;
+                        ballDirectionX = -ballSpeed*0.5;
+                        ballDirectionY = -ballSpeed;
+                    }
+                }
+                else{
+                    message.innerHTML = "Return";
+                    by = 60;
+                    if(rnd<0.25){
+                        servingSide = "opp-left"
+                        bx = 200;
+                        ballDirectionX = ballSpeed*0.5;
+                        ballDirectionY = ballSpeed;
+                    }
+                    else{
+                        servingSide = "opp-right"
+                        bx = 300;
+                        ballDirectionX = -ballSpeed*0.5;
+                        ballDirectionY = ballSpeed;
+                    }
+                }
+                player.style.left = px + "px"
+                player.style.top = py + "px"
+                opp.style.left = bx + "px"
+                ball.style.left = bx + "px"
+                ball.style.top = by + "px"
+                ball.style.display = "block"
+            }
+            let chooseMode=()=>{
+                clearInterval(intP);
+                clearInterval(intPMouse);
+                usingMouse = !usingMouse;
+                if(usingMouse){
+                    mode.innerHTML = "Mouse mode"
+                }
+                else{
+                    mode.innerHTML = "Keyboard mode"
+                }
+            }
+            let handleClick=(event)=>{
+                if(!beginning){
+                prevX = px;
+                prevY = py;
+                destinationX = event.clientX-545;
+                destinationY = event.clientY-15;
+                deltaX = destinationX-prevX;
+                deltaY = destinationY-prevY;
+                speedFactor = 1000/(Math.sqrt(deltaX**2+deltaY**2))
+                if (speedFactor > 10){
+                    speedFactor = 10
+                }
+                test3.innerHTML = `${deltaX.toFixed(2)} ${deltaY.toFixed(2)} ${speedFactor.toFixed(2)}`
+                footstepsFunc();
+                if (!intervalRunning){
+                    intervalRunning = true;
+                }
+                else{
+                    clearInterval(intPMouse)
+                }
+                if (destinationX > px){
+                        playerDirectionX = speedFactor
+                    }
+                    else{
+                        playerDirectionX = -speedFactor
+                    }
+                if (destinationY > py){
+                        playerDirectionY = speedFactor
+                    }
+                    else{
+                        playerDirectionY = -speedFactor
+                    }
+                    intPMouse = setInterval(movePlayer, 10)
+
+            }
+            else{
+                beginning = false;
+                serve();
+            }
+        }
+            let handleKeyDown=()=>{
+                let key1 = event.key;
+                if(beginning && key1 == " "){
+                    beginning = false;
+                    serve();
+                }
+                else if(!usingMouse){
+                    playerDirectionY = 0;
+                    speedFactor = 1;
+                    if(!intervalRunning){
+                    intervalRunning = true
+                    
+                    if (key1 == "a"){
+                        if(!isKeyTaken){
+                            isKeyTaken = true
+                            if(intP){
+                                clearInterval(intP)
+                            }
+                            playerDirectionX =-10
+                            intP = setInterval(movePlayer, 10)
+                        }
+                        else{
+                            twoKeysTaken = true
+                        }
+                    }
+                    if (key1 == "d"){
+                        if(!isKeyTaken){
+                            isKeyTaken = true
+                            if(intP){
+                            clearInterval(intP)
+                            }
+                            playerDirectionX =10
+                            intP = setInterval(movePlayer, 10)
+                        }
+                        else{
+                            player.style.height="100px"
+                        }
+                        
+                    }
+                    test.innerHTML = `!! key taken: ${isKeyTaken}<br>two keys: ${twoKeysTaken}`
+                    
+                }
+                
+            }
+        }
+            let handleKeyUp=()=>{
+                if(!twoKeysTaken){
+                    clearInterval(intP);
+                    intervalRunning = false;
+                    isKeyTaken = false;
+                }
+                test.innerHTML = `key taken: ${isKeyTaken}<br>two keys: ${twoKeysTaken}`
+
+            }
+/*             let movePLeft=()=>{
+                
+                px-=1
+                player.style.left = px+"px"
+                test.innerHTML = `key taken: ${isKeyTaken}<br>two keys: ${twoKeysTaken}`
+                if (usingMouse && destinationX > px){
+                    clearInterval(intPMouse)
+                    intervalRunning = false
+                }
+                
+            }
+            let movePRight=()=>{
+
+                px+=1
+                player.style.left = px+"px"
+                test.innerHTML = `key taken: ${isKeyTaken}<br>two keys: ${twoKeysTaken}`
+                if (usingMouse && destinationX < px){
+                    clearInterval(intPMouse)
+                    intervalRunning = false
+                }
+
+            } */
+            let movePlayer=()=>{
+                
+                    px+=playerDirectionX*Math.abs(deltaX)*0.01
+                    py+=playerDirectionY*Math.abs(deltaY)*0.01
+                    player.style.left = px+"px"
+                    player.style.top = py+"px"
+                    test2.innerHTML = `destX: ${destinationX.toFixed(2)}, px: ${px.toFixed(2)}, destY: ${destinationY.toFixed(2)}, py: ${py.toFixed(2)}`
+                    /* test.innerHTML = `key taken: ${isKeyTaken}<br>two keys: ${twoKeysTaken}` */
+                    if (usingMouse){
+                       if(playerDirectionX == -speedFactor && px < destinationX){
+                            clearInterval(intPMouse)
+                            intervalRunning = false
+                       }
+                       if(playerDirectionX == speedFactor && px > destinationX){
+                            clearInterval(intPMouse)
+                            intervalRunning = false
+                       }
+                       if(playerDirectionY == -speedFactor && py < destinationY){
+                            clearInterval(intPMouse)
+                            intervalRunning = false
+                       }
+                       if(playerDirectionY == speedFactor && py > destinationY){
+                            clearInterval(intPMouse)
+                            intervalRunning = false
+                       }
+                    }
+                }
+            let footstepsFunc=()=>{
+                footsteps.style.animation = "none";
+                footsteps.offsetHeight;
+                footsteps.style.opacity = 0
+                footsteps.style.left = destinationX-10 + "px"
+                footsteps.style.top = destinationY-7 + "px"
+                footsteps.style.animation = "footstepsanimation 1s"
+            }
+            let moveBall=()=>{
+                if(by >= py){
+                    playerHit();
+                }
+                if(by <= 40){
+                    oppHit();
+                }
+                if(bx >= 500 || bx <= 0){
+                    ballDirectionX *= -1
+                }
+                bx+=ballDirectionX
+                by+=ballDirectionY
+                ball.style.top = by + "px"
+                ball.style.left = bx + "px"
+                opp.style.left = bx + "px"
+                test.innerHTML= `bdY: ${ballDirectionY.toFixed(2)}, should return? ${Math.abs(px-bx) < 100} ${ballDirectionY > 0}`
+            }
+            let serve=()=>{
+                intBall = setInterval(moveBall, 10)
+
+            }
+            let playerHit=()=>{
+// tee niin että pelaaja ei voi liikkua vihun puolella --> pallo ei voi kääntyä omalla puolella!
+                if(Math.abs(px-bx) < 100 && !playerHasHitTheBall){
+                    ballDirectionY *= -1
+                    playerHasHitTheBall = true;
+                }
+                else if(!playerHasHitTheBall){
+                    fail();
+                }
+            }
+            let oppHit=()=>{
+                if(Math.random()>0.1){
+                    ballDirectionY *= -1.1
+                    ballDirectionX = ballDirectionY*(Math.random()-0.5)
+                    playerHasHitTheBall = false;
+                }
+                else{
+                    clearInterval(intBall)
+                    score();
+                    playerHasHitTheBall = false;
+                    startGame();
+                }
+            }
+            let fail=()=>{
+                ptsO++;
+                updateScore(ptsO);
+                clearInterval(intBall);
+                failuremessage.innerHTML = `you failed because: distance: ${Math.abs(px-bx).toFixed(0)}`
+                startGame()
+            }
+            let score=()=>{
+                ptsP++;
+                updateScore(ptsP);
+            }
+            let updateScore=(x)=>{
+                let actual;
+                switch(x){
+                    case 1:
+                        actual = "15";
+                        break;
+                    case 2:
+                        actual = "30";
+                        break;
+                    case 3:
+                        actual = "40";
+                        break;
+                    default:
+                        actual = "AD"
+                }
+                if(x == ptsP){
+                    ptsPA = actual
+                }
+                else{
+                    ptsOA = actual
+                }
+                scoreboard.innerHTML = `${ptsPA}:${ptsOA}`
+            }
+            startGame();
+            </script>
+    </body>
+</html>
