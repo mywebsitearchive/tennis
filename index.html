@@ -8,6 +8,7 @@
         <style>
             body{
                 background-color: rgb(81, 39, 24);
+                font-family: sans-serif;
             }
             #court{
                 position: relative;
@@ -45,7 +46,7 @@
                 left: 240px;
                 display: none;
             }
-            #test, #test2, #test3, #mode, #message, #failuremessage{
+            #test, #test2, #test3, #mode, #message, #failuremessage, #text{
                 color: wheat;
             }
             #footsteps{
@@ -69,11 +70,46 @@
             }
             #scoreboard{
                 position: absolute;
-                left: 100px;
-                font-size: x-large;
+                right: 55px;
+                font-size: larger;
                 color: wheat;
             }
-
+            #score{
+                margin: auto;
+                width: 500px;
+                height: 200px;
+                background-color: antiquewhite;
+            }
+            .wide, .thin, .thinner{
+                float: left;
+                height: 45%;
+                border: 5px solid transparent;
+                font-size: 40px;
+                line-height: 90px;
+            }
+            .wide{
+                width: 240px;
+                font-size: 35px;
+            }
+            .thin{
+                width: 90px;
+                text-align: center;
+            }
+            #oppgames, #playergames{
+                color: white;
+                background-color: brown;
+            }
+            .thinner{
+                width: 40px;
+            }
+            .ball{
+                height: 20px;
+                width: 20px;
+                border-radius: 10px;
+                background-color: green;
+                margin-left: 10px;
+                margin-top: 35px;
+            }
         </style>
     </head>
     <body onkeydown="handleKeyDown()" onkeyup="handleKeyUp()">
@@ -83,13 +119,28 @@
             <div id="ball"></div>
             <div id="footsteps"></div>
             <div id="message"></div>
-            <div id="scoreboard">00:00</div>
+            <div id="scoreboard">Opponent stamina: 1</div>
+        </div>
+        <div id="score">
+            <div class="thinner">
+                <div class="ball" id="oppball" style="display: none;"></div>
+            </div>
+            <div class="wide" id="oppname">OPPONENT</div>
+            <div class="thin" id="oppgames">0</div>
+            <div class="thin" id="opppts">0</div>
+            <div class="thinner">
+                <div class="ball" id="playerball" style="display: none;"></div>
+            </div>
+            <div class="wide" id="playername">PLAYER</div>
+            <div class="thin" id="playergames">0</div>
+            <div class="thin" id="playerpts">0</div>
         </div>
         <button onclick="chooseMode()">Change mode</button>
-        <div id="mode">Mouse mode</div>
+        <div id="mode">Which mode?</div>
         <div id="test">t1</div>
         <div id="test2">t2</div>
         <div id="test3">t3</div>
+        <div id="text">t</div>
         <div id="failuremessage"></div>
         <div id="testscore"></div>
 
@@ -109,7 +160,10 @@
             const scoreboard = document.getElementById("scoreboard");
             const failuremessage = document.getElementById("failuremessage");
             const testscore = document.getElementById("testscore");
-            
+            const opppts = document.getElementById("opppts");
+            const oppgames = document.getElementById("oppgames");
+            const playerpts = document.getElementById("playerpts");
+            const playergames = document.getElementById("playergames");
 
             let intP;
             let intPMouse;
@@ -118,7 +172,7 @@
             let intervalRunning = false;
             let isKeyTaken = false;
             let twoKeysTaken = false;
-            let usingMouse = true;
+            let usingMouse = false;
             let beginning = true;
             let playerHasHitTheBall = false;
             let destinationX ;
@@ -134,10 +188,21 @@
             let speedFactor = 0;
             let servingSide;
             let ballSpeed = 5;
-            let ptsP = 0;
-            let ptsO = 0;
-            let ptsPA = "00";
-            let ptsOA = "00";
+            let oppSkill = 1; 
+            // let playerPoints = 0;
+            // let oppPoints = 0;
+            // let playerPointsText = "00";
+            // let oppPointsText = "00";
+
+            let playerPoints = 0;
+            let oppPoints = 0;
+            let playerPointsText = "00";
+            let oppPointsText = "00";
+            let playerGamesValue = 0;
+            let oppGamesValue = 0;
+            let screen;
+            let isDeuce = false;
+            let gameHasEnded = false;
 
             let startGame=()=>{
                 if(intP || intPMouse){
@@ -167,6 +232,7 @@
                 }
                 else{
                     message.innerHTML = "Return";
+                    playerHasHitTheBall = false;
                     by = 60;
                     if(rnd<0.25){
                         servingSide = "opp-left"
@@ -200,7 +266,8 @@
                 }
             }
             let handleClick=(event)=>{
-                if(!beginning){
+                if(usingMouse){
+if(!beginning){
                 prevX = px;
                 prevY = py;
                 destinationX = event.clientX-545;
@@ -238,10 +305,12 @@
                 beginning = false;
                 serve();
             }
+                }
+                
         }
             let handleKeyDown=()=>{
                 let key1 = event.key;
-                if(beginning && key1 == " "){
+                if(beginning &&( key1 == "a" || key1 == "d")){
                     beginning = false;
                     serve();
                 }
@@ -257,7 +326,7 @@
                             if(intP){
                                 clearInterval(intP)
                             }
-                            playerDirectionX =-10
+                            playerDirectionX =-5
                             intP = setInterval(movePlayer, 10)
                         }
                         else{
@@ -270,11 +339,11 @@
                             if(intP){
                             clearInterval(intP)
                             }
-                            playerDirectionX =10
+                            playerDirectionX =5
                             intP = setInterval(movePlayer, 10)
                         }
                         else{
-                            player.style.height="100px"
+                            twoKeysTaken = true
                         }
                         
                     }
@@ -316,14 +385,12 @@
 
             } */
             let movePlayer=()=>{
-                
+                if(usingMouse){
                     px+=playerDirectionX*Math.abs(deltaX)*0.01
                     py+=playerDirectionY*Math.abs(deltaY)*0.01
                     player.style.left = px+"px"
                     player.style.top = py+"px"
                     test2.innerHTML = `destX: ${destinationX.toFixed(2)}, px: ${px.toFixed(2)}, destY: ${destinationY.toFixed(2)}, py: ${py.toFixed(2)}`
-                    /* test.innerHTML = `key taken: ${isKeyTaken}<br>two keys: ${twoKeysTaken}` */
-                    if (usingMouse){
                        if(playerDirectionX == -speedFactor && px < destinationX){
                             clearInterval(intPMouse)
                             intervalRunning = false
@@ -340,6 +407,10 @@
                             clearInterval(intPMouse)
                             intervalRunning = false
                        }
+                    }
+                    else{
+                        px+=playerDirectionX
+                    player.style.left = px+"px"
                     }
                 }
             let footstepsFunc=()=>{
@@ -368,44 +439,78 @@
                 test.innerHTML= `bdY: ${ballDirectionY.toFixed(2)}, should return? ${Math.abs(px-bx) < 100} ${ballDirectionY > 0}`
             }
             let serve=()=>{
+                clearInterval(intBall)
                 intBall = setInterval(moveBall, 10)
+                if(ballDirectionY < 0){
+                    playerHasHitTheBall= true
+                }
 
             }
             let playerHit=()=>{
 // tee niin että pelaaja ei voi liikkua vihun puolella --> pallo ei voi kääntyä omalla puolella!
-                if(Math.abs(px-bx) < 100 && !playerHasHitTheBall){
+                if(Math.abs(px-bx) < 50 && !playerHasHitTheBall){
                     ballDirectionY *= -1
                     playerHasHitTheBall = true;
+                    if(px-bx >25){ // 50 ~ 25
+                        ballDirectionX = -10
+                        oppSkill -= 0.2*Math.random()
+                    }
+                    else if(px-bx > 5){ // 25 ~ 5
+                        ballDirectionX = -5
+                        oppSkill -= 0.1*Math.random()
+                    }
+                    else if(px-bx > -5){ // 5 ~ -5)
+                        ballDirectionX = 0
+                        if(oppSkill < 1){
+                            oppSkill += 0.05*Math.random()
+                        }
+                    }
+                    else if(px-bx > -25){  // -5 ~ -25
+                        ballDirectionX = 5
+                        oppSkill -= 0.1*Math.random()
+
+                    }
+                    else{  // -25 ~ -50
+                        ballDirectionX = 10
+                        oppSkill -= 0.2*Math.random()
+                    }
+                        scoreboard.innerHTML = `Opponent stamina: ${oppSkill.toFixed(2)}`
                 }
                 else if(!playerHasHitTheBall){
                     fail();
                 }
             }
             let oppHit=()=>{
-                if(Math.random()>0.1){
+                if(Math.random()<oppSkill){
                     ballDirectionY *= -1.1
                     ballDirectionX = ballDirectionY*(Math.random()-0.5)
                     playerHasHitTheBall = false;
                 }
                 else{
-                    clearInterval(intBall)
                     score();
-                    playerHasHitTheBall = false;
-                    startGame();
                 }
             }
             let fail=()=>{
-                ptsO++;
-                updateScore(ptsO);
+                scoreboard.innerHTML = `Opponent stamina: ${oppSkill.toFixed(2)}`
+                oppPoints--;
+                changeFormat(oppPoints, oppPointsText)
+                // updateScore(oppPoints);
                 clearInterval(intBall);
                 failuremessage.innerHTML = `you failed because: distance: ${Math.abs(px-bx).toFixed(0)}`
                 startGame()
+                
             }
             let score=()=>{
-                ptsP++;
-                updateScore(ptsP);
+                oppSkill = 1;
+                scoreboard.innerHTML = `Opponent stamina: ${oppSkill.toFixed(2)}`
+                playerPoints++;
+                changeFormat(playerPoints, playerPointsText)
+                // updateScore(playerPoints);
+                clearInterval(intBall)
+                startGame();
+
             }
-            let updateScore=(x)=>{
+            /* let updateScore=(x)=>{
                 let actual;
                 switch(x){
                     case 1:
@@ -420,15 +525,113 @@
                     default:
                         actual = "AD"
                 }
-                if(x == ptsP){
-                    ptsPA = actual
+                if(x == playerPoints){
+                    playerPointsText = actual
                 }
                 else{
-                    ptsOA = actual
+                    oppPointsText = actual
                 }
-                scoreboard.innerHTML = `${ptsPA}:${ptsOA}`
-            }
-            startGame();
+                scoreboard.innerHTML = `${playerPointsText}:${oppPointsText}`
+            } */
+            let changeFormat =(x, text)=>{
+                    if(!gameHasEnded){
+                        if(playerPoints <= 3 && oppPoints >= -3 && playerPoints-oppPoints !=6){
+                        switch(Math.abs(x)){
+                            case 1:
+                                text = "15";
+                                break;
+                            case 2:
+                                text = "30";
+                                break;
+                            case 3:
+                                text = "40";
+                                break;
+                    }
+                        if(x == playerPoints){
+                        playerPointsText = text
+                    }
+                    else{
+                        oppPointsText = text
+                    }
+                    playerpts.innerHTML = playerPointsText
+                    opppts.innerHTML = oppPointsText
+                    }
+                        else if(!isDeuce){
+                            if(playerPoints != -oppPoints){
+                                if(playerPoints + oppPoints > 0){
+                                    updateGames("opp")
+                                } 
+                                else{
+                                updateGames("player")
+                                }
+                        }
+                        else{
+                                    playerpts.innerHTML = "40"
+                                    opppts.innerHTML = "40"
+                                    isDeuce = true
+                        }
+                    }
+                    else{
+                        switch(playerPoints+oppPoints){
+                            case -2:
+                                    updateGames("player")
+                                break;
+                            case -1:
+                                    playerpts.innerHTML = " "
+                                    opppts.innerHTML = "AD"
+                                break;
+                            case 0:
+                                    playerpts.innerHTML = "40"
+                                    opppts.innerHTML = "40"
+                                break;
+                            case 1:
+                                    playerpts.innerHTML = "AD"
+                                    opppts.innerHTML = " "
+                                break;
+                            case 2:
+                                    updateGames("opp")
+                                break;
+                        }
+                    }
+                            playergames.innerHTML = playerGamesValue;
+
+                        oppgames.innerHTML = oppGamesValue;
+                document.getElementById("text").innerHTML=`playerPoints = ${playerPoints}<br>;oppPoints = ${oppPoints}<br>;playerPointsText = ${playerPointsText}<br>oppPointsText = ${oppPointsText}<br>isDeuce = ${isDeuce}<br>gameHasEnded = ${gameHasEnded};`
+
+                        if(gameHasEnded){
+                            playerPoints = 0;
+                            oppPoints = 0;
+                            gameHasEnded = false
+                        }
+                    }
+                    
+                    else{/* 
+                        playerPointsText = "00";
+                        oppPointsText = "00";
+                        isDeuce = false;
+                        gameHasEnded = false; */
+                    }
+                    
+                    
+
+}
+           let updateGames=(loser)=>{
+                    // changeServer()
+                    if(loser == "opp"){
+                        playerGamesValue++;
+                    }
+                    else{
+                        oppGamesValue++;
+                    }
+                                    playerpts.innerHTML = "0"
+                                    opppts.innerHTML = "0"
+                                    gameHasEnded = true
+                                    playerPointsText ="0"
+                                    oppPointsText ="0"
+                                    playerPoints = 0
+                                    oppPoints = 0
+                }
+startGame();
             </script>
     </body>
 </html>
