@@ -310,7 +310,7 @@ if(!beginning){
         }
             let handleKeyDown=()=>{
                 let key1 = event.key;
-                if(beginning &&( key1 == "a" || key1 == "d")){
+                if(beginning && key1 == "s"){
                     beginning = false;
                     serve();
                 }
@@ -616,6 +616,7 @@ if(!beginning){
 
 }
            let updateGames=(loser)=>{
+           isDeuce = false
                     // changeServer()
                     if(loser == "opp"){
                         playerGamesValue++;
