@@ -18,24 +18,19 @@
                 height: 500px;
                 cursor: url(Crosshairs_Red.svg.png) 4 12, all-scroll;
             }
-            #player{
+            #player, #opp{
                 position: absolute;
                 height: 16px;
                 width: 16px;
-                background-color: red;
                 border: 2px solid white;
-                top: 440px;
-                left: 240px
-
+            }
+            #player{
+                background-color: red;
+                top: 88%;
             }
             #opp{
-                position: absolute;
-                height: 16px;
-                width: 16px;
                 background-color: blue;
-                border: 2px solid white;
-                top: 40px;
-                left: 240px
+                top: 8%;
             }
             #ball{
                 position: absolute;
@@ -46,7 +41,7 @@
                 left: 240px;
                 display: none;
             }
-            #test, #test2, #test3, #mode, #message, #failuremessage, #text{
+            #test, #test2, #test3, #mode, #message, #failuremessage, #text, #scoreboard{
                 color: wheat;
             }
             #footsteps{
@@ -64,15 +59,16 @@
             button{
                 font-size: large;
             }
-            #message{
+            #message, #scoreboard{
+                top: 2%;
                 position: absolute;
-                font-size: larger;
+                font-size: 20px;
+            }
+            #message{
+                left: 55px;
             }
             #scoreboard{
-                position: absolute;
                 right: 55px;
-                font-size: larger;
-                color: wheat;
             }
             #score{
                 margin: auto;
@@ -88,11 +84,11 @@
                 line-height: 90px;
             }
             .wide{
-                width: 240px;
+                width: 48%;
                 font-size: 35px;
             }
             .thin{
-                width: 90px;
+                width: 18%;
                 text-align: center;
             }
             #oppgames, #playergames{
@@ -100,7 +96,7 @@
                 background-color: brown;
             }
             .thinner{
-                width: 40px;
+                width: 8%;
             }
             .ball{
                 height: 20px;
@@ -110,9 +106,69 @@
                 margin-left: 10px;
                 margin-top: 35px;
             }
+            #mobilebuttonleft, #mobilebuttonright, #mobilebuttoncenter{
+                display: none;
+            }
+            @media only screen and (max-width: 600px) {
+            #court{
+                width: 200px;
+                height: 200px;
+              }
+            #ball{
+                height: 8px;
+                width: 8px;
+              }
+            #score{
+                width: 200px;
+                height: 80px;
+              }
+            .wide, .thin, .thinner{
+                height: 45%;
+                border: 2px solid transparent;
+                font-size: 16px;
+                line-height: 36px;
+            }
+            #debug{
+                display: none;
+            }
+            #player, #opp{
+                position: absolute;
+                height: 6.4px;
+                width: 6.4px;
+                border: 0.8px solid white;
+            }
+            #scoreboard, #message{
+                right: 10px;
+                font-size: 12px;
+            }
+            #message{
+                left: 10px;
+            }
+            #mobilebuttonleft, #mobilebuttonright, #mobilebuttoncenter{
+                position: absolute;
+                display: block;
+                width: 50%;
+                height: 650px;
+                z-index: 1;
+                border: 4px black solid;
+                background-color: transparent;
+                opacity: 0;
+            }
+            #mobilebuttoncenter{
+                width: 100%;
+            }
+            #mobilebuttonright{
+                right: 0px;
+            }
+            }
         </style>
     </head>
     <body onkeydown="handleKeyDown()" onkeyup="handleKeyUp()">
+
+        <button id="mobilebuttonleft" ontouchstart="mobileButtonLeftFunction()" ontouchend="touchCancel()">left button</button>
+        <button id="mobilebuttonright" ontouchstart="mobileButtonRightFunction()" ontouchend="touchCancel()">right button</button>
+        <button id="mobilebuttoncenter" ontouchstart="startButtonFunction()" ontouchend="touchCancel()">center button</button>
+
         <div id="court" onclick="handleClick(event)">
             <div id="opp"></div>
             <div id="player"></div>
@@ -135,14 +191,17 @@
             <div class="thin" id="playergames">0</div>
             <div class="thin" id="playerpts">0</div>
         </div>
-        <button onclick="chooseMode()">Change mode</button>
-        <div id="mode">Which mode?</div>
-        <div id="test">t1</div>
-        <div id="test2">t2</div>
-        <div id="test3">t3</div>
-        <div id="text">t</div>
-        <div id="failuremessage"></div>
-        <div id="testscore"></div>
+        <div id="debug">
+            <button onclick="chooseMode()">Change mode</button>
+            <div id="mode">Which mode?</div>
+            <div id="test">t1</div>
+            <div id="test2">t2</div>
+            <div id="test3">t3</div>
+            <div id="text">t</div>
+            <div id="failuremessage"></div>
+            <div id="testscore"></div>
+        </div>
+
 
 
         <script>
@@ -150,6 +209,7 @@
             let py = 440;
             let bx = 240;
             const player = document.getElementById("player");
+            const court = document.getElementById("court");
             const ball = document.getElementById("ball");
             const opp = document.getElementById("opp");
             const test = document.getElementById("test");
@@ -164,7 +224,7 @@
             const oppgames = document.getElementById("oppgames");
             const playerpts = document.getElementById("playerpts");
             const playergames = document.getElementById("playergames");
-
+            
             let intP;
             let intPMouse;
             let intBall;
@@ -202,9 +262,15 @@
             let oppGamesValue = 0;
             let screen;
             let isDeuce = false;
+            let usingTouchscreen = false;
             let gameHasEnded = false;
+            let pressedButton = "";
 
             let startGame=()=>{
+                if(usingTouchscreen){
+                    
+                document.getElementById("mobilebuttoncenter").style.display="block"
+                }
                 if(intP || intPMouse){
                     clearInterval(intP);
                     clearInterval(intPMouse);
@@ -247,11 +313,11 @@
                         ballDirectionY = ballSpeed;
                     }
                 }
-                player.style.left = px + "px"
-                player.style.top = py + "px"
-                opp.style.left = bx + "px"
-                ball.style.left = bx + "px"
-                ball.style.top = by + "px"
+                player.style.left = px/500*100+"%"
+                player.style.top = py/500*100+"%"
+                opp.style.left = bx/500*100+"%"
+                ball.style.left = bx/500*100+"%"
+                ball.style.top = by/500*100+"%"
                 ball.style.display = "block"
             }
             let chooseMode=()=>{
@@ -388,8 +454,8 @@ if(!beginning){
                 if(usingMouse){
                     px+=playerDirectionX*Math.abs(deltaX)*0.01
                     py+=playerDirectionY*Math.abs(deltaY)*0.01
-                    player.style.left = px+"px"
-                    player.style.top = py+"px"
+                    player.style.left = px/500*100+"%"
+                    player.style.top = py/500*100+"%"
                     test2.innerHTML = `destX: ${destinationX.toFixed(2)}, px: ${px.toFixed(2)}, destY: ${destinationY.toFixed(2)}, py: ${py.toFixed(2)}`
                        if(playerDirectionX == -speedFactor && px < destinationX){
                             clearInterval(intPMouse)
@@ -410,15 +476,15 @@ if(!beginning){
                     }
                     else{
                         px+=playerDirectionX
-                    player.style.left = px+"px"
+                    player.style.left = px/500*100+"%"
                     }
                 }
             let footstepsFunc=()=>{
                 footsteps.style.animation = "none";
                 footsteps.offsetHeight;
                 footsteps.style.opacity = 0
-                footsteps.style.left = destinationX-10 + "px"
-                footsteps.style.top = destinationY-7 + "px"
+                footsteps.style.left = (destinationX-10)/500*100+"%"
+                footsteps.style.top = (destinationY-7)/500*100+"%"
                 footsteps.style.animation = "footstepsanimation 1s"
             }
             let moveBall=()=>{
@@ -433,9 +499,9 @@ if(!beginning){
                 }
                 bx+=ballDirectionX
                 by+=ballDirectionY
-                ball.style.top = by + "px"
-                ball.style.left = bx + "px"
-                opp.style.left = bx + "px"
+                ball.style.top = by/500*100+"%"
+                ball.style.left = bx/500*100+"%"
+                opp.style.left = bx/500*100+"%"
                 test.innerHTML= `bdY: ${ballDirectionY.toFixed(2)}, should return? ${Math.abs(px-bx) < 100} ${ballDirectionY > 0}`
             }
             let serve=()=>{
@@ -615,7 +681,7 @@ if(!beginning){
                     
 
 }
-           let updateGames=(loser)=>{
+            let updateGames=(loser)=>{
            isDeuce = false
                     // changeServer()
                     if(loser == "opp"){
@@ -632,7 +698,70 @@ if(!beginning){
                                     playerPoints = 0
                                     oppPoints = 0
                 }
-startGame();
+            let mobileButtonLeftFunction=()=>{
+                pressedButton = "left"
+                handleTouch();
+                }
+            let mobileButtonRightFunction=()=>{
+                pressedButton = "right"
+                handleTouch();
+                }
+            let startButtonFunction=()=>{
+                pressedButton = "start"
+                document.getElementById("mobilebuttoncenter").style.display="none"
+                handleTouch();
+            }
+            let handleTouch=()=>{
+                usingTouchscreen = true
+                if(pressedButton == "start"){
+                    serve();
+                }
+                else if(!usingMouse){
+                    playerDirectionY = 0;
+                    speedFactor = 1;
+                    if(!intervalRunning){
+                    intervalRunning = true
+                    
+                    if (pressedButton == "left"){
+                        if(!isKeyTaken){
+                            isKeyTaken = true
+                            if(intP){
+                                clearInterval(intP)
+                            }
+                            playerDirectionX =-5
+                            intP = setInterval(movePlayer, 10)
+                        }
+                        else{
+                            twoKeysTaken = true
+                        }
+                    }
+                    if (pressedButton == "right"){
+                        if(!isKeyTaken){
+                            isKeyTaken = true
+                            if(intP){
+                            clearInterval(intP)
+                            }
+                            playerDirectionX =5
+                            intP = setInterval(movePlayer, 10)
+                        }
+                        else{
+                            twoKeysTaken = true
+                        }
+                        
+                    }
+                    
+                    }
+                
+                }
+        }
+            let touchCancel=()=>{
+                  if(!twoKeysTaken){
+                    clearInterval(intP);
+                    intervalRunning = false;
+                    isKeyTaken = false;
+                }
+            }     
+        startGame();
             </script>
     </body>
 </html>
