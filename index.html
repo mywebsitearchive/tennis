@@ -3,7 +3,7 @@
     <head>
         <title>Tennis game</title>
 	<meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" user-scalable=no>
     <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/3/31/Tennis_ball_2.svg">
         <style>
             body{
@@ -109,7 +109,10 @@
             #mobilebuttonleft, #mobilebuttonright, #mobilebuttoncenter{
                 display: none;
             }
-            @media only screen and (max-width: 600px) {
+            @media only screen and (max-width: 800px) {
+                body{
+                    height: 500px;
+                }
             #court{
                 width: 200px;
                 height: 200px;
