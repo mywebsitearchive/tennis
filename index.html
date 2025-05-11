@@ -268,7 +268,7 @@
 
             let startGame=()=>{
                 if(usingTouchscreen){
-                ballSpeed = 2
+                ballSpeed = 3.5
                 document.getElementById("mobilebuttoncenter").style.display="block"
                 }
                 if(intP || intPMouse){
@@ -707,12 +707,13 @@ if(!beginning){
                 handleTouch();
                 }
             let startButtonFunction=()=>{
+                usingTouchscreen = true
+
                 pressedButton = "start"
                 document.getElementById("mobilebuttoncenter").style.display="none"
                 handleTouch();
             }
             let handleTouch=()=>{
-                usingTouchscreen = true
                 if(pressedButton == "start"){
                     serve();
                 }
